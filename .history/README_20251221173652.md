@@ -1,0 +1,193 @@
+# 🚀 Projeto 03: Diário de Bordo - Construindo uma API Serverless na Raça
+
+Este repositório documenta a jornada de criação de um catálogo de produtos usando a stack Serverless da AWS. Mais do que um projeto técnico, este é o registro de como contornar as restrições de um ambiente de Sandbox real para entregar uma solução funcional. Bem-vindo ao caos organizado! 😄
+
+---
+
+## 🏢 O Começo: Bem-vindo ao Sandbox da Escola da Nuvem
+
+Tudo começou por aqui, no console do Sandbox da **Escola da Nuvem**. Um lugar bonito, minimalista... e com restrições de permissões que fariam um gerente de segurança da CIA parecer permissivo.
+
+![Página Inicial do Console Sandbox](assets/pagina-inicial-1.jpeg)
+
+---
+
+## 📐 A Arquitetura do Sonho
+
+Olha só que legal o plano que desenhei. Uma API serverless, simples, elegante e escalável. O problema? Colocá-la em pé...
+
+![Arquitetura no DrawIO](assets/ArquiteturaDrawio.jpeg)
+
+---
+
+## 🗄️ Passo 1: DynamoDB - O Banco de Dados "Que Não Precisa de Administrador"
+
+Entrei no serviço DynamoDB porque:
+- ✅ É um **managed service** (AWS cuida do trabalho pesado)
+- ✅ **Altamente escalável** (aumenta sozinho se precisar)
+- ✅ **Durável** (seus dados não vão desaparecer)
+- ✅ **Performático** (responde rápido demais)
+
+Aqui está a página inicial do DynamoDB:
+
+![Página Inicial DynamoDB](assets/dynamo-db-2.jpeg)
+
+### Criando a Tabela "Produtos"
+
+Com as configurações da imagem abaixo (sim, foi primeira tentativa e deu certo):
+
+![Configuração da Tabela DynamoDB](assets/criando-tabela-dynamodb-3.jpeg)
+
+E então... **PRONTO!** A tabela foi criada sem drama:
+
+![Tabela Criada com Sucesso](assets/tabela-criada-dynamodb-4.jpeg)
+
+---
+
+## ⚡ Passo 2: Lambda - A Função Que Vai Processar Tudo
+
+Criei a função Lambda chamada `product-api-lambda` rodando **Node.js 24.x** (o mais recente que tinham). Lambda é o coração da aplicação serverless - ele executa código sem você se preocupar com servidores.
+
+![Configuração Inicial Lambda](assets/lambda-funcao-5.jpeg)
+
+### O Primeiro Plot Twist: O Drama das Permissões (IAM)
+
+Tentei criar uma Role manualmente, selecionando as permissões:
+- **AmazonDynamoDBFullAccess** - para ler/escrever no DynamoDB
+- **CloudWatchLogsFullAccess** - para mandar logs para o CloudWatch
+
+Mas o Sandbox não deixou. Olha só o recado que recebi:
+
+![Tentativa de Criar Role Manualmente - BLOQUEADO](assets/role-nao-criada-14.jpeg)
+
+> "Desculpe, você não tem permissão para isso." 
+> *- Escola da Nuvem, 2025*
+
+### A Sacada do Século: As Roles Pré-configuradas
+
+Pensei comigo: *"Se não posso criar, talvez tenha uma pronta!"*. E adivinha? Encontrei a **`LabRole`**! Usei ela e funcionou. Sometimes the best solution is the one that already exists. 🎯
+
+![Role LabRole Selecionada](assets/configuracao-lambda-6.jpeg)
+
+### Lambda Criada! 🎉
+
+![Função Lambda Criada com Sucesso](assets/funcao-criada-lambda-7.jpeg)
+
+---
+
+## 🔌 Passo 3: API Gateway - O Sonho que Não Saiu do Papel
+
+O plano era usar o **API Gateway** como porta de entrada para receber requisições HTTP. Seria bonito demais para ser verdade...
+
+![API Gateway - Página Inicial](assets/Api-gateway-8.jpeg)
+
+Tentei de TUDO:
+- ✋ Criar pela console? Bloqueado.
+- ✋ Criar direto na Lambda? Bloqueado.
+- ✋ Mudar de região? Ainda bloqueado.
+- ✋ Rezar? Não funcionou.
+
+O motivo? A Escola da Nuvem tem restrições absurdas no Sandbox, provavelmente para controlar custos. Fair enough! 💸
+
+---
+
+## 💡 Passo 4: O Pivot Genial - JSON de Teste ao Resgate!
+
+Se não posso criar uma API real, **simulo uma com o JSON de teste do Lambda!** Isso mesmo. Fiz o deploy do código e comecei a rodar testes simulando POST e GET direto na função.
+
+### Teste 1: "Hello World, Estou Vivo"
+
+![Função Executada - Teste Inicial](assets/funcao-executada-lambda-9.jpeg)
+
+Lindo! A função respondeu com um "Hello World".
+
+### O Código Que Faz a Mágica Acontecer
+
+Olha só o código que escrevi e deployei para fazer toda essa orquestração funcionar:
+
+![Código Lambda Completo](assets/codigo-code-lambda-11.jpeg)
+
+Este código:
+- ✅ Recebe requisições POST para criar produtos
+- ✅ Escreve no DynamoDB
+- ✅ Responde requisições GET para listar produtos
+- ✅ Envia logs para o CloudWatch em tempo real
+
+### Teste 2: POST - "Vem Cá, DynamoDB!"
+
+Rodei um teste POST criando um novo produto. E aí... aconteceu a magia:
+
+![Dado Retornado na Tabela DynamoDB](assets/dado-retornado-na-tabela-12.jpeg)
+
+O dado apareceu na tabela DynamoDB. **A integração está funcionando!** 🎊
+
+---
+
+## 📊 Passo 5: CloudWatch - O Voyeurismo do Bom
+
+Para fechar a arquitetura como um verdadeiro profissional, fui ao **CloudWatch** monitorar os logs em tempo real.
+
+![CloudWatch - Página Inicial](assets/Cloudwatch-10.jpeg)
+
+Localizei os log streams e ativei o **Live Tail** - um recurso que mostra os logs acontecendo em tempo real enquanto você executa os testes.
+
+E então... **BINGO!** 🎯
+
+![Logs em Tempo Real via CloudWatch Live Tail](assets/logs-cloudwatch-13.jpeg)
+
+Ver aqueles logs surgindo na tela, mostrando cada execução, cada erro, cada sucesso... foi tipo ganhar na loteria, mas melhor porque você entende o que está acontecendo!
+
+---
+
+## 🚧 Passo 6: A Última Tentativa - API Gateway Novamente
+
+Sim, tentei mais uma vez. Porque insistência é a mãe da inovação (ou da loucura, ainda não tenho certeza).
+
+![Tentativa de Criar API Gateway - BLOQUEADO](assets/api-gateway-nao-criada-15.jpeg)
+
+Spoiler: Não deu. Mas hey, pelo menos confirma que a Lambda está fazendo seu trabalho direitinho!
+
+---
+
+## 🎓 Lições Aprendidas (A.K.A. "Por Que Você Não Leu a Documentação Antes?")
+
+1. **Roles Pré-configuradas São Seus Amigas**: Às vezes, a solução já está lá, esperando você perguntar "Posso usar?"
+2. **JSON de Teste é Sua Caneta Mágica**: Não precisa de API Gateway para testar uma Lambda. Logs + JSON de teste = debug completo.
+3. **CloudWatch Live Tail É Vida**: Monitorar em tempo real muda tudo. Você VÊ o que está acontecendo.
+4. **Sandbox ≠ Mundo Real**: As restrições do laboratório são deliberadas. Use isso como prática para ambientes mais restritivos no trabalho real.
+5. **Resiliência É Arquitetura**: Contornar obstáculos e entregar a solução é o que diferencia um bom arquiteto de um que só implementa o plano.
+
+---
+
+## 🏆 Conclusão
+
+Este projeto provou que ser **Arquiteto Cloud é ter resiliência**. Aprendi a:
+
+- ✅ Identificar roles pré-configuradas quando a criação manual é bloqueada
+- ✅ Validar integrações de backend usando payloads JSON de mock
+- ✅ Utilizar ferramentas de monitoramento avançado para debugar infraestrutura em tempo real
+- ✅ Adaptar a arquitetura sem comprometer a funcionalidade
+
+**O resultado final?** Uma API serverless 100% funcional, monitorada, escalável e sem um único servidor para gerenciar. Não está ruim para um dia de trabalho em um Sandbox cheio de restrições! 🚀
+
+---
+
+## 📚 Stack Utilizado
+
+| Componente | Descrição |
+|-----------|-----------|
+| **DynamoDB** | Banco de dados NoSQL managed |
+| **Lambda** | Computação serverless (Node.js 24.x) |
+| **CloudWatch** | Monitoramento e logs em tempo real |
+| **IAM** | Gerenciamento de permissões (LabRole) |
+| **AWS SDK** | Integração com DynamoDB |
+
+---
+
+## 🤝 Contribuições
+
+Se você passou por situações semelhantes em Sandboxes restritivos, sinta-se à vontade para compartilhar suas estratégias!
+
+---
+
+**Desenvolvido com ☕ e muito bom humor** em dezembro de 2025.
